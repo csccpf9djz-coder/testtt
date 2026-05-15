@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>18TRIP 活動計算機</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg:#f9f9f8; --bg2:#ffffff; --bg3:#f4f4f2; --bg4:#eeeeed;
+  --border:#e5e5e3; --border2:#d4d4d0;
+  --text:#1a1a18; --text2:#5a5a56; --text3:#9a9a94;
+  --accent:#d97706; --accent-bg:#fff8ed;
+  --ok:#16a34a; --ok-bg:#f0fdf4;
+  --warn:#d97706; --warn-bg:#fffbeb;
+  --danger:#dc2626; --danger-bg:#fef2f2;
+  --radius:10px; --radius-sm:7px;
+  --shadow:0 1px 3px rgba(0,0,0,0.07),0 1px 2px rgba(0,0,0,0.04);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Noto Sans TC',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5}
+body.lang-ja{font-family:'Noto Sans JP',-apple-system,BlinkMacSystemFont,sans-serif}
+.container{max-width:860px;margin:0 auto;padding:0 1.25rem 4rem}
+header{padding:2.25rem 0 1.5rem;border-bottom:1px solid var(--border);margin-bottom:1.25rem}
+.header-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.5rem}
+.header-inner{display:flex;align-items:baseline;gap:0.5rem;flex-wrap:wrap}
+.brand{font-size:clamp(1.3rem,3.5vw,1.75rem);font-weight:700;color:var(--accent);letter-spacing:-0.02em;line-height:1.2}
+header h1{font-size:clamp(1.3rem,3.5vw,1.75rem);font-weight:700;color:var(--text);letter-spacing:-0.02em;line-height:1.2}
+header .sub{font-size:12px;color:var(--text3);margin-top:0.3rem}
+
+/* Language switcher */
+.lang-switcher{display:flex;gap:4px;align-items:center}
+.lang-btn{padding:4px 10px;border:1px solid var(--border2);border-radius:100px;background:transparent;color:var(--text3);font-size:11px;font-weight:500;cursor:pointer;transition:all 0.15s;font-family:inherit;letter-spacing:0.03em}
+.lang-btn:hover{border-color:var(--accent);color:var(--accent)}
+.lang-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem 1.5rem;margin-bottom:0.875rem;box-shadow:var(--shadow)}
+.section-label{font-size:10.5px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);margin-bottom:1rem}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:640px){.grid3,.grid4{grid-template-columns:1fr 1fr}}
+@media(max-width:380px){.grid2,.grid3,.grid4{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:11px;font-weight:500;color:var(--text2)}
+.field input,.field select{height:36px;padding:0 10px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-family:inherit;width:100%;transition:border-color 0.15s,box-shadow 0.15s;appearance:none;-webkit-appearance:none}
+.field input:focus,.field select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,119,6,0.12)}
+.field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239a9a94' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-color:var(--bg2);padding-right:28px;cursor:pointer}
+.metric-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:0.875rem}
+@media(max-width:640px){.metric-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:380px){.metric-grid{grid-template-columns:repeat(2,1fr)}}
+.metric{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:0.875rem 0.75rem;text-align:center;box-shadow:var(--shadow)}
+.metric-label{font-size:9.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
+.metric-val{font-size:17px;font-weight:700;color:var(--text);line-height:1.1}
+.metric-val.ok{color:var(--ok)}
+.metric-val.warn{color:var(--warn)}
+.metric-sub{font-size:10px;color:var(--text3);margin-top:3px}
+.progress-wrap{background:var(--bg4);border-radius:100px;height:5px;margin:7px 0 3px;overflow:hidden}
+.progress-bar{height:100%;border-radius:100px;background:var(--accent)}
+.status{padding:9px 12px;border-radius:var(--radius-sm);font-size:13px;border-left:3px solid;margin:8px 0;line-height:1.65}
+.status.ok{background:var(--ok-bg);color:var(--ok);border-color:var(--ok)}
+.status.warn{background:var(--warn-bg);color:var(--warn);border-color:var(--warn)}
+.status.danger{background:var(--danger-bg);color:var(--danger);border-color:var(--danger)}
+.tab-row{display:flex;gap:2px;margin-bottom:1.1rem;border-bottom:1px solid var(--border);padding-bottom:0;flex-wrap:wrap}
+.tab{padding:7px 14px;border:none;background:transparent;color:var(--text3);font-size:12.5px;font-family:inherit;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color 0.15s,border-color 0.15s;letter-spacing:0.01em}
+.tab:hover{color:var(--text2)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.chart-wrap{position:relative;width:100%;height:250px}
+.legend{display:flex;gap:14px;margin-top:10px;font-size:11px;color:var(--text3);flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:5px}
+.legend-line{width:18px;height:2px;border-radius:2px}
+.entry-hdr{display:grid;grid-template-columns:62px 1fr 1fr;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);margin-bottom:2px}
+.entry-hdr span{font-size:10.5px;font-weight:600;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;text-align:center}
+.entry-hdr span:first-child{text-align:left}
+.entry-row{display:grid;grid-template-columns:62px 1fr 1fr;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid var(--bg3)}
+.entry-row:last-child{border-bottom:none}
+.day-lbl{font-size:12px;font-weight:600;color:var(--text2)}
+.entry-input{height:30px;padding:0 8px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-family:inherit;width:100%;transition:border-color 0.15s,box-shadow 0.15s}
+.entry-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,119,6,0.12);background:var(--bg2)}
+.diff-cell{text-align:center;font-size:12px;color:var(--text3)}
+.bonus-section{margin-bottom:0.875rem}
+.bonus-section-title{font-size:10.5px;font-weight:600;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:5px}
+.bonus-table-wrap{overflow-x:auto}
+.bonus-table{border-collapse:collapse;font-size:12px;width:100%}
+.bonus-table th{padding:5px 8px;text-align:center;border-bottom:1px solid var(--border);font-size:10px;font-weight:600;color:var(--text3);letter-spacing:0.06em}
+.bonus-table td{padding:5px 8px;text-align:center;border-bottom:1px solid var(--bg3);color:var(--text2)}
+.bonus-table tr:last-child td{border-bottom:none}
+.bonus-table td.active-cell{background:var(--accent-bg);color:var(--accent);font-weight:700;border-radius:5px}
+.bonus-total{background:var(--bg3);border-radius:var(--radius-sm);border:1px solid var(--border);padding:9px 12px;font-size:13px;color:var(--text2);margin-top:8px}
+.bonus-total b{color:var(--text)}
+#saveIndicator{position:fixed;bottom:1.25rem;right:1.25rem;background:var(--ok-bg);border:1px solid rgba(22,163,74,0.25);color:var(--ok);font-size:11px;font-weight:500;padding:5px 13px;border-radius:100px;opacity:0;transition:opacity 0.25s;pointer-events:none;z-index:100;letter-spacing:0.04em}
+#saveIndicator.show{opacity:1}
+.hint{font-size:11px;color:var(--text3);margin-top:5px;line-height:1.6}
+</style>
+</head>
+<body>
+
+<div id="saveIndicator">✓</div>
+
+<div class="container">
+  <header>
+    <div class="header-top">
+      <div class="header-inner">
+        <span class="brand">18TRIP</span>
+        <h1 id="h1-title">活動計算機</h1>
+      </div>
+      <div class="lang-switcher">
+        <button class="lang-btn active" onclick="setLang('zh')">繁中</button>
+        <button class="lang-btn" onclick="setLang('ja')">日本語</button>
+      </div>
+    </div>
+    <div class="sub" id="header-sub">活動進度所需鑽石，僅參考用</div>
+  </header>
+
+  <div class="card">
+    <div class="section-label" id="lbl-settings">基本設定</div>
+    <div class="grid3" style="margin-bottom:10px">
+      <div class="field">
+        <label id="lbl-startDate">活動開始日（第1天）</label>
+        <input type="date" id="startDate">
+      </div>
+      <div class="field">
+        <label id="lbl-targetPt">目標活動pt</label>
+        <select id="targetPt">
+          <option value="1200000" selected></option>
+          <option value="1310000"></option>
+          <option value="3000000"></option>
+          <option value="4500000"></option>
+          <option value="4500018"></option>
+          <option value="5500000"></option>
+          <option value="5500018"></option>
+          <option value="18000000"></option>
+          <option value="custom"></option>
+        </select>
+      </div>
+      <div class="field" id="customPtField" style="display:none">
+        <label id="lbl-customPt">自訂pt目標</label>
+        <input type="number" id="customPt" placeholder="例：3000000">
+      </div>
+      <div class="field">
+        <label id="lbl-stageDiff">活動關卡難度</label>
+        <select id="stageDiff">
+          <option value="10500" selected>EASY（10,500pt）</option>
+          <option value="10600">NORMAL（10,600pt）</option>
+          <option value="10800">HARD（10,800pt）</option>
+          <option value="10900">VERY HARD（10,900pt）</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid4" style="margin-bottom:10px">
+      <div class="field">
+        <label id="lbl-ssr">SSR <span class="t-cards">特效張數</span>（0～6）</label>
+        <select id="ssrCount">
+          <option value="0" selected>0（+0%）</option>
+          <option value="1">1（+20%）</option>
+          <option value="2">2（+40%）</option>
+          <option value="3">3（+60%）</option>
+          <option value="4">4（+80%）</option>
+          <option value="5">5（+110%）</option>
+          <option value="6">6 <span class="t-max"></span>（+150%）</option>
+        </select>
+      </div>
+      <div class="field">
+        <label id="lbl-sr">SR <span class="t-cards">特效張數</span>（0～6）</label>
+        <select id="srCount">
+          <option value="0" selected>0（+0%）</option>
+          <option value="1">1（+8%）</option>
+          <option value="2">2（+18%）</option>
+          <option value="3">3（+30%）</option>
+          <option value="4">4（+40%）</option>
+          <option value="5">5（+50%）</option>
+          <option value="6">6 <span class="t-max"></span>（+60%）</option>
+        </select>
+      </div>
+      <div class="field">
+        <label id="lbl-r">R <span class="t-cards">特效張數</span>（0～6）</label>
+        <select id="rCount">
+          <option value="0" selected>0（+0%）</option>
+          <option value="1">1（+2%）</option>
+          <option value="2">2（+3%）</option>
+          <option value="3">3（+4%）</option>
+          <option value="4">4（+5%）</option>
+          <option value="5">5（+7%）</option>
+          <option value="6">6 <span class="t-max"></span>（+10%）</option>
+        </select>
+      </div>
+      <div class="field">
+        <label id="lbl-special">特殊（週年活動）</label>
+        <input type="number" id="specialBonus" value="0" min="0" placeholder="例：50">
+      </div>
+    </div>
+
+    <div class="grid3">
+      <div class="field">
+        <label id="lbl-diamond">持有鑽石數量（個）</label>
+        <input type="number" id="diamondCount" value="0" min="0">
+      </div>
+      <div class="field">
+        <label id="lbl-shumai">燒賣（1個＝1AP）</label>
+        <input type="number" id="shumai" value="0" min="0">
+      </div>
+      <div class="field">
+        <label id="lbl-bento">燒賣便當（1個＝10AP）</label>
+        <input type="number" id="bentoCount" value="0" min="0">
+      </div>
+    </div>
+  </div>
+
+  <div class="metric-grid" id="metricRow"></div>
+  <div id="infoBox"></div>
+
+  <div class="card">
+    <div class="section-label" id="lbl-record">活動紀錄</div>
+    <div class="tab-row">
+      <button class="tab active" onclick="showTab('chart',this)" id="tab-chart">走勢圖</button>
+      <button class="tab" onclick="showTab('entry',this)" id="tab-entry">每日記錄</button>
+      <button class="tab" onclick="showTab('bonustable',this)" id="tab-bonus">加成表</button>
+    </div>
+    <div id="pane-chart">
+      <div class="chart-wrap"><canvas id="progressChart"></canvas></div>
+      <div class="legend" id="chartLegend"></div>
+    </div>
+    <div id="pane-entry" style="display:none">
+      <div class="hint" id="entry-hint" style="margin-bottom:10px">每天晚上記錄累計pt，走勢圖將同步更新。</div>
+      <div class="entry-hdr">
+        <span id="hdr-date">日期</span>
+        <span id="hdr-pt">累計pt（實績）</span>
+        <span id="hdr-diff">與目標差距</span>
+      </div>
+      <div id="entryRows"></div>
+    </div>
+    <div id="pane-bonustable" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+// ── Constants ──
+const EVENT_DAYS=9;
+const AP_MIN=30,PT_BASE=1800,TPBATTLE=10,DISC_PER_DAY=10;
+// JP時間固定（JST = UTC+9）
+const START_HOUR_JST=16; // 第1天 16:00 JST
+const END_HOUR_JST=20;   // 第9天 20:59 JST → 計算上は21:00の直前なので21を使用
+const END_MIN_JST=59;    // 表示用
+
+// JST基準でのイベント開始・終了をUTCで返す
+function getEvStart(startDate) {
+  // startDate = 'YYYY-MM-DD'（JP時間の日付）
+  // JST 16:00 = UTC 07:00
+  const d = new Date(startDate + 'T07:00:00Z'); // 16:00 JST = 07:00 UTC
+  return d;
+}
+function getEvEnd(startDate) {
+  // 第9天 20:59 JST = 第9天 11:59 UTC
+  const d = new Date(startDate + 'T11:59:00Z');
+  d.setUTCDate(d.getUTCDate() + EVENT_DAYS - 1);
+  return d;
+}
+
+// 残り自然AP計算（JST基準）
+function calcRemainingAP() {
+  const sd = g('startDate');
+  if (!sd) return null;
+  const now = new Date();
+  const evS = getEvStart(sd);
+  const evE = getEvEnd(sd);
+  if (now < evS || now > evE) return null;
+  return Math.floor((evE - now) / 60000 / AP_MIN);
+}
+
+// 活動終了日時の表示文字列（ユーザーのローカル時間で表示）
+function getEndDateStr(startDate) {
+  if (!startDate) return t('notSet');
+  const evE = getEvEnd(startDate);
+  // ローカル時間に変換して表示
+  const m = evE.getMonth() + 1;
+  const d = evE.getDate();
+  const hh = String(evE.getHours()).padStart(2, '0');
+  const mm = String(evE.getMinutes()).padStart(2, '0');
+  return `${m}/${d} ${hh}:${mm}`;
+}
+
+// 全期間の自然AP合計（JST基準で各日のAP計算）
+function getDayAP(i) {
+  // 第1天: 16:00〜24:00 = 8h = 16回
+  // 第9天: 0:00〜20:59 ≈ 21h = 41回（20×2+1）
+  // 中間: 24h = 48回
+  if (i === 0) return Math.floor(8 * 60 / AP_MIN);        // 16:00〜24:00 = 8h
+  if (i === EVENT_DAYS - 1) return Math.floor((20 * 60 + 59) / AP_MIN); // 0:00〜20:59 ≈ 41回
+  return Math.floor(24 * 60 / AP_MIN);                     // 48回/日
+}
+
+// 優惠日数の計算（JST基準）
+function getRemainingDiscDays() {
+  const sd = g('startDate');
+  if (!sd) return EVENT_DAYS;
+  const now = new Date();
+  const evS = getEvStart(sd);
+  const evE = getEvEnd(sd);
+  if (now <= evS) return EVENT_DAYS;
+  if (now >= evE) return 0;
+  // JSTでの今日が何日目かを計算
+  const jstOffset = 9 * 60; // JST = UTC+9
+  const nowJST = new Date(now.getTime() + jstOffset * 60000);
+  const startJST = new Date(evS.getTime() + jstOffset * 60000);
+  const nowDay = new Date(nowJST.getUTCFullYear(), nowJST.getUTCMonth(), nowJST.getUTCDate());
+  const startDay = new Date(startJST.getUTCFullYear(), startJST.getUTCMonth(), startJST.getUTCDate());
+  const daysPassed = Math.floor((nowDay - startDay) / 86400000);
+  return Math.max(1, EVENT_DAYS - daysPassed);
+}
+const SSR_B=[0,20,40,60,80,110,150];
+const SR_B=[0,8,18,30,40,50,60];
+const R_B=[0,2,3,4,5,7,10];
+const STORAGE_KEY='aitore_calc_v3';
+let entryData=Array.from({length:EVENT_DAYS},()=>({pt:''}));
+
+// ── i18n ──
+let LANG='zh';
+const T={
+  zh:{
+    title:'活動計算機', sub:'活動進度所需鑽石，僅參考用',
+    settings:'基本設定', startDate:'活動開始日（第1天）',
+    targetPt:'目標活動pt', customPt:'自訂pt目標', stageDiff:'活動關卡難度',
+    cards:'特效張數', maxed:'完凸',
+    special:'特殊（週年活動）%',
+    diamond:'持有鑽石數量（個）', shumai:'燒賣（1個＝1AP）', bento:'燒賣便當（1個＝10AP）',
+    record:'活動紀錄', tabChart:'走勢圖', tabEntry:'每日記錄', tabBonus:'加成表',
+    entryHint:'每天晚上記錄累計pt，走勢圖將同步更新。',
+    hdrDate:'日期', hdrPt:'累計pt（實績）', hdrDiff:'與目標差距',
+    entryPlaceholder:'輸入pt',
+    mEnd:'活動結束', mBonus:'特效加成', mRate:'倍率', mTotalAP:'自然AP合計',
+    mWithItem:'含道具', mPtPerAP:'每1AP獲得pt', mLive:'剩餘自然回體', mLiveSub:'JP時區，即時計算',
+    goal:'目標', current:'現在', complete:'完成', withEstimate:'含道具預估可達',
+    analysis:'進度分析', notSet:'尚未設定',
+    okNat:'✓ 自然回復AP即可達標！還有餘裕 {0} pt，無需消耗鑽石。',
+    okItem:'✓ 自然AP＋道具可達標！使用燒賣便當約 {0} 個即可。',
+    okDia:'✓ 道具＋鑽石可達標！預計消耗約 {0} 個鑽石（持有 {1} 個）。',
+    warnDia:'⚠ 仍差 {0} pt，還需額外約 {1} 個鑽石。',
+    legendTarget:'建議走勢', legendActual:'實際進度',
+    bonusTotal:'合計加成', saved:'已自動儲存 ✓',
+    targetOptions:[
+      'R卡完凸 120萬pt（班SP／季節）','R卡完凸 131萬pt（Feature）',
+      'SSR 1卡 300萬pt（Feature）','SR完凸 450萬pt（季節）',
+      '完走稱號 450萬pt（季節）','SR完凸 550萬pt（班SP／Feature）',
+      '完走稱號 550萬pt（班SP）','SSR完凸 1800萬pt（Feature）','自訂輸入...'
+    ]
+  },
+  ja:{
+    title:'イベントpt計算機', sub:'イベント進捗・必要ダイヤの目安',
+    settings:'基本設定', startDate:'イベント開始日（初日）',
+    targetPt:'目標イベントpt', customPt:'カスタムpt目標', stageDiff:'イベントステージ難易度',
+    cards:'特効枚数', maxed:'完凸',
+    special:'特殊ボーナス（記念イベント等）%',
+    diamond:'所持ダイヤ数（個）', shumai:'シュウマイ（1個＝1AP）', bento:'シュウマイ弁当（1個＝10AP）',
+    record:'イベント記録', tabChart:'推移グラフ', tabEntry:'毎日記録', tabBonus:'特効表',
+    entryHint:'毎日夜に累計ptを記録すると推移グラフが更新されます。',
+    hdrDate:'日付', hdrPt:'累計pt（実績）', hdrDiff:'目標との差',
+    entryPlaceholder:'pt入力',
+    mEnd:'イベント終了', mBonus:'特効ボーナス', mRate:'倍率', mTotalAP:'自然AP合計',
+    mWithItem:'アイテム込み', mPtPerAP:'1AP当たりpt', mLive:'残り自然AP', mLiveSub:'JST基準リアルタイム計算',
+    goal:'目標', current:'現在', complete:'達成', withEstimate:'アイテム込み予測達成率',
+    analysis:'進捗分析', notSet:'未設定',
+    okNat:'✓ 自然回復APで達成できます！余裕は {0} pt、ダイヤ消費不要。',
+    okItem:'✓ 自然AP＋アイテムで達成できます！シュウマイ弁当約 {0} 個あれば大丈夫。',
+    okDia:'✓ アイテム＋ダイヤで達成できます！約 {0} 個のダイヤ消費予定（所持 {1} 個）。',
+    warnDia:'⚠ まだ {0} pt不足。追加で約 {1} 個のダイヤが必要です。',
+    legendTarget:'推奨ペース', legendActual:'実績',
+    bonusTotal:'合計ボーナス', saved:'自動保存しました ✓',
+    targetOptions:[
+      'Rカード完凸 120万pt（班SP／季節）','Rカード完凸 131万pt（Feature）',
+      'SSR 1枚 300万pt（Feature）','SRカード完凸 450万pt（季節）',
+      '完走称号 450万pt（季節）','SRカード完凸 550万pt（班SP／Feature）',
+      '完走称号 550万pt（班SP）','SSRカード完凸 1800万pt（Feature）','カスタム入力...'
+    ]
+  }
+};
+
+const TARGET_VALUES=['1200000','1310000','3000000','4500000','4500018','5500000','5500018','18000000','custom'];
+
+function t(key,...args){
+  let s=(T[LANG]||T.zh)[key]||key;
+  args.forEach((a,i)=>s=s.replace(`{${i}}`,a));
+  return s;
+}
+
+function applyLang(){
+  const lang=LANG;
+  document.documentElement.lang=lang==='zh'?'zh-Hant':lang==='ja'?'ja':'en';
+  document.body.className=`lang-${lang}`;
+  document.title=`18TRIP ${t('title')}`;
+  document.getElementById('saveIndicator').textContent=t('saved');
+
+  document.getElementById('h1-title').textContent=t('title');
+  document.getElementById('header-sub').textContent=t('sub');
+  document.getElementById('lbl-settings').textContent=t('settings');
+  document.getElementById('lbl-startDate').textContent=t('startDate');
+  document.getElementById('lbl-targetPt').textContent=t('targetPt');
+  document.getElementById('lbl-customPt').textContent=t('customPt');
+  document.getElementById('lbl-stageDiff').textContent=t('stageDiff');
+  document.getElementById('lbl-ssr').textContent=`SSR ${t('cards')} (0–6)`;
+  document.getElementById('lbl-sr').textContent=`SR ${t('cards')} (0–6)`;
+  document.getElementById('lbl-r').textContent=`R ${t('cards')} (0–6)`;
+  document.getElementById('lbl-special').textContent=t('special');
+  document.getElementById('lbl-diamond').textContent=t('diamond');
+  document.getElementById('lbl-shumai').textContent=t('shumai');
+  document.getElementById('lbl-bento').textContent=t('bento');
+  document.getElementById('lbl-record').textContent=t('record');
+  document.getElementById('tab-chart').textContent=t('tabChart');
+  document.getElementById('tab-entry').textContent=t('tabEntry');
+  document.getElementById('tab-bonus').textContent=t('tabBonus');
+  document.getElementById('entry-hint').textContent=t('entryHint');
+  document.getElementById('hdr-date').textContent=t('hdrDate');
+  document.getElementById('hdr-pt').textContent=t('hdrPt');
+  document.getElementById('hdr-diff').textContent=t('hdrDiff');
+
+  // Update targetPt options
+  const sel=document.getElementById('targetPt');
+  const cur=sel.value;
+  const opts=t('targetOptions');
+  Array.from(sel.options).forEach((o,i)=>{ if(opts[i]) o.textContent=opts[i]; });
+  sel.value=cur;
+
+  // Update lang buttons
+  document.querySelectorAll('.lang-btn').forEach(b=>{
+    b.classList.toggle('active',b.textContent.trim()===({zh:'繁中',ja:'日本語'}[lang]));
+  });
+
+  render();
+}
+
+function setLang(l){
+  LANG=l;
+  localStorage.setItem('aitore_lang',l);
+  applyLang();
+}
+
+// ── Persistence ──
+function loadData(){
+  try{
+    LANG=localStorage.getItem('aitore_lang')||'zh';
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(!raw)return;
+    const s=JSON.parse(raw);
+    const sv=(id,v)=>{if(v!==undefined&&v!==null&&v!=='')document.getElementById(id).value=v;};
+    sv('startDate',s.startDate);sv('targetPt',s.targetPt);sv('customPt',s.customPt);
+    sv('stageDiff',s.stageDiff);sv('ssrCount',s.ssrCount);sv('srCount',s.srCount);
+    sv('rCount',s.rCount);sv('specialBonus',s.specialBonus);
+    sv('diamondCount',s.diamondCount);sv('shumai',s.shumai);sv('bentoCount',s.bentoCount);
+    if(Array.isArray(s.entryData)&&s.entryData.length===EVENT_DAYS)entryData=s.entryData;
+    if(s.targetPt==='custom')document.getElementById('customPtField').style.display='';
+  }catch(e){console.warn('loadData error:',e);}
+}
+
+function saveData(){_doSave();}
+function _doSave(){
+  try{
+    localStorage.setItem(STORAGE_KEY,JSON.stringify({
+      startDate:g('startDate'),targetPt:g('targetPt'),customPt:g('customPt'),
+      stageDiff:g('stageDiff'),ssrCount:g('ssrCount'),srCount:g('srCount'),
+      rCount:g('rCount'),specialBonus:g('specialBonus'),
+      diamondCount:g('diamondCount'),shumai:g('shumai'),bentoCount:g('bentoCount'),entryData
+    }));
+    const el=document.getElementById('saveIndicator');
+    if(el){el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),1800);}
+  }catch(e){console.warn('saveData error:',e);}
+}
+
+function g(id){return document.getElementById(id).value;}
+function fmtPt(n){return Math.round(n).toLocaleString();}
+
+function getCurrentPt(){
+  for(let i=EVENT_DAYS-1;i>=0;i--){
+    const v=parseFloat(entryData[i].pt);
+    if(!isNaN(v)&&entryData[i].pt!=='')return v;
+  }
+  return 0;
+}
+function getBonus(){
+  const ssr=parseInt(g('ssrCount'))||0,sr=parseInt(g('srCount'))||0,r=parseInt(g('rCount'))||0;
+  const special=parseFloat(g('specialBonus'))||0;
+  const pct=SSR_B[ssr]+SR_B[sr]+R_B[r]+special;
+  return{mult:1+pct/100,pct};
+}
+function getTarget(){
+  const v=g('targetPt');
+  if(v==='custom')return parseInt(g('customPt'))||5500000;
+  return parseInt(v)||5500000;
+}
+function calcDiaCost(needAP){
+  const discDays=getRemainingDiscDays(),discQuota=DISC_PER_DAY*discDays;
+  const disc=Math.min(needAP,discQuota),full=Math.max(0,needAP-discQuota);
+  return{cost:disc+full*2,disc,full,discDays,discQuota};
+}
+
+function getDayLabel(i){
+  const d=g('startDate');
+  if(!d)return`D${i+1}`;
+  // JST基準で開始日から i 日後の日付を表示
+  const evS=getEvStart(d);
+  const jstMs=evS.getTime()+9*60*60000;
+  const dayMs=jstMs+i*86400000;
+  const dt=new Date(dayMs);
+  return`${dt.getUTCMonth()+1}/${dt.getUTCDate()}`;
+}
+
+let myChart=null,chartTimer=null,liveTimer=null;
+
+function scheduleChartUpdate(){
+  clearTimeout(chartTimer);
+  chartTimer=setTimeout(()=>{
+    const target=getTarget(),labels=[],tl=[],el2=[];
+    for(let i=0;i<EVENT_DAYS;i++){
+      labels.push(getDayLabel(i));
+      tl.push(Math.round(target/EVENT_DAYS*(i+1)));
+      const ep=parseFloat(entryData[i].pt);
+      el2.push(entryData[i].pt===''?null:Math.round(ep));
+    }
+    if(myChart){myChart.data.labels=labels;myChart.data.datasets[0].data=tl;myChart.data.datasets[1].data=el2;myChart.update('none');}
+  },150);
+}
+
+function renderDiff(el,val,cumT){
+  if(val===''||val===null){el.textContent='—';el.style.color='';return;}
+  const ep=parseFloat(val);
+  if(isNaN(ep)){el.textContent='—';el.style.color='';return;}
+  const diff=ep-cumT;
+  el.textContent=(diff>=0?'+':'')+fmtPt(diff);
+  el.style.color=diff>=0?'#16a34a':'#dc2626';
+}
+
+function buildEntryRows(){
+  const target=getTarget(),container=document.getElementById('entryRows');
+  container.innerHTML='';
+  for(let i=0;i<EVENT_DAYS;i++){
+    const cumT=target/EVENT_DAYS*(i+1);
+    const row=document.createElement('div');row.className='entry-row';
+    const lbl=document.createElement('span');lbl.className='day-lbl';lbl.textContent=getDayLabel(i);
+    const inp=document.createElement('input');
+    inp.className='entry-input';inp.type='number';inp.placeholder=t('entryPlaceholder');
+    inp.setAttribute('inputmode','numeric');inp.value=entryData[i].pt;
+    const diffDiv=document.createElement('div');diffDiv.className='diff-cell';
+    renderDiff(diffDiv,entryData[i].pt,cumT);
+    inp.addEventListener('input',function(){
+      entryData[i].pt=this.value;
+      renderDiff(diffDiv,this.value,cumT);
+      scheduleChartUpdate();saveData();
+    });
+    row.appendChild(lbl);row.appendChild(inp);row.appendChild(diffDiv);
+    container.appendChild(row);
+  }
+}
+
+function startLiveTicker(){
+  clearInterval(liveTimer);
+  liveTimer=setInterval(()=>{
+    const el=document.getElementById('liveAP');if(!el)return;
+    const ap=calcRemainingAP();
+    if(ap===null){el.textContent='—';el.className='metric-val';return;}
+    el.textContent=fmtPt(ap)+' AP';
+    el.className='metric-val '+(ap>50?'ok':'warn');
+  },10000);
+}
+
+function render(){
+  const target=getTarget();
+  const{mult:bonus,pct:bonusPct}=getBonus();
+  const diamonds=parseInt(g('diamondCount'))||0;
+  const stagePt=parseInt(g('stageDiff'))||10500;
+  const currentPt=getCurrentPt();
+  const shumai=parseInt(g('shumai'))||0;
+  const bento=parseInt(g('bentoCount'))||0;
+  const startDate=g('startDate');
+
+  const itemAP=shumai+bento*10;
+  let totalAP=0;const days=[];
+  for(let i=0;i<EVENT_DAYS;i++){const ap=getDayAP(i);totalAP+=ap;days.push({ap,label:getDayLabel(i)});}
+
+  const ptPerAP=(PT_BASE+stagePt/TPBATTLE)*bonus;
+  const liveAP=calcRemainingAP();
+  const freeAP=liveAP!==null?liveAP:totalAP;
+  const withItemPt=currentPt+(freeAP+itemAP)*ptPerAP;
+  const remaining=Math.max(0,target-currentPt);
+  const natGap=remaining-freeAP*ptPerAP;
+  const itemGap=remaining-(freeAP+itemAP)*ptPerAP;
+
+  const endDateStr = getEndDateStr(startDate);
+
+  const pct=Math.min(100,Math.round(currentPt/target*100));
+  const pctItem=Math.min(100,Math.round(withItemPt/target*100));
+  const liveStr=liveAP!==null?fmtPt(liveAP)+' AP':'—';
+  const liveCls=liveAP!==null?(liveAP>50?'ok':'warn'):'';
+
+  document.getElementById('metricRow').innerHTML=`
+    <div class="metric"><div class="metric-label">${t('mEnd')}</div><div class="metric-val" style="font-size:12px">${endDateStr}</div></div>
+    <div class="metric"><div class="metric-label">${t('mBonus')}</div><div class="metric-val" style="color:var(--accent)">+${bonusPct}%</div><div class="metric-sub">${bonus.toFixed(2)}x ${t('mRate')}</div></div>
+    <div class="metric"><div class="metric-label">${t('mTotalAP')}</div><div class="metric-val">${fmtPt(totalAP)}</div><div class="metric-sub">${t('mWithItem')} ${fmtPt(totalAP+itemAP)}</div></div>
+    <div class="metric"><div class="metric-label">${t('mPtPerAP')}</div><div class="metric-val" style="font-size:14px">${fmtPt(ptPerAP)}</div></div>
+    <div class="metric"><div class="metric-label">${t('mLive')}</div><div class="metric-val ${liveCls}" style="font-size:14px" id="liveAP">${liveStr}</div><div class="metric-sub">${t('mLiveSub')}</div></div>`;
+
+  let info=`<div class="card" style="margin-bottom:0.875rem">
+    <div class="section-label">${t('analysis')}</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:5px">
+      ${t('goal')}：<span style="color:var(--text);font-weight:600">${fmtPt(target)} pt</span>
+      ・${t('current')}：<span style="color:var(--text);font-weight:600">${fmtPt(currentPt)} pt</span>
+    </div>
+    <div class="progress-wrap"><div class="progress-bar" style="width:${pct}%"></div></div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:10px">${pct}% ${t('complete')} ・ ${t('withEstimate')} ${pctItem}%</div>`;
+
+  if(natGap<=0){
+    info+=`<div class="status ok">${t('okNat',fmtPt(-natGap))}</div>`;
+  }else if(itemGap<=0){
+    const nb=Math.ceil(natGap/ptPerAP/10);
+    info+=`<div class="status ok">${t('okItem',nb)}</div>`;
+  }else{
+    const needAP=Math.ceil(itemGap/ptPerAP);
+    const{cost}=calcDiaCost(needAP);
+    const short=Math.max(0,cost-diamonds);
+    if(short===0){
+      info+=`<div class="status ok">${t('okDia',fmtPt(cost),fmtPt(diamonds))}</div>`;
+    }else{
+      info+=`<div class="status warn">${t('warnDia',fmtPt(remaining),fmtPt(short))}</div>`;
+    }
+  }
+  info+=`</div>`;
+  document.getElementById('infoBox').innerHTML=info;
+
+  const labels=[],tl=[],el2=[];
+  for(let i=0;i<EVENT_DAYS;i++){
+    labels.push(days[i].label);
+    tl.push(Math.round(target/EVENT_DAYS*(i+1)));
+    const ep=parseFloat(entryData[i].pt);
+    el2.push(entryData[i].pt===''?null:Math.round(ep));
+  }
+  if(myChart)myChart.destroy();
+  myChart=new Chart(document.getElementById('progressChart'),{
+    type:'line',
+    data:{labels,datasets:[
+      {label:t('legendTarget'),data:tl,borderColor:'#d97706',backgroundColor:'rgba(217,119,6,0.06)',borderWidth:2,pointRadius:3,pointBackgroundColor:'#d97706',tension:.35,fill:true},
+      {label:t('legendActual'),data:el2,borderColor:'#2563eb',backgroundColor:'transparent',borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#2563eb',tension:.2,fill:false,spanGaps:false}
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{backgroundColor:'#fff',borderColor:'#e5e5e3',borderWidth:1,titleColor:'#5a5a56',bodyColor:'#1a1a18',padding:10,
+          callbacks:{label:(c)=>`${c.dataset.label}: ${fmtPt(c.parsed.y)} pt`}}
+      },
+      scales:{
+        y:{ticks:{color:'#9a9a94',callback:(v)=>fmtPt(v),font:{size:10}},grid:{color:'rgba(0,0,0,0.05)'},border:{color:'transparent'}},
+        x:{ticks:{color:'#9a9a94',font:{size:10}},grid:{color:'rgba(0,0,0,0.03)'},border:{color:'#e5e5e3'}}
+      }
+    }
+  });
+  document.getElementById('chartLegend').innerHTML=`
+    <div class="legend-item"><div class="legend-line" style="background:#d97706"></div><span>${t('legendTarget')}</span></div>
+    <div class="legend-item"><div class="legend-line" style="background:#2563eb"></div><span>${t('legendActual')}</span></div>`;
+
+  buildEntryRows();
+
+  // Bonus table
+  const ssrS=parseInt(g('ssrCount'))||0,srS=parseInt(g('srCount'))||0,rS=parseInt(g('rCount'))||0;
+  let bt='';
+  for(const[lbl,arr,sel]of[['SSR',SSR_B,ssrS],['SR',SR_B,srS],['R',R_B,rS]]){
+    bt+=`<div class="bonus-section"><div class="bonus-section-title">${lbl} ${t('cards')}</div>
+      <div class="bonus-table-wrap"><table class="bonus-table"><thead><tr>`;
+    for(let i=0;i<=6;i++)bt+=`<th>${i}${i===6?' '+t('maxed'):''}${LANG==='zh'?'張':LANG==='ja'?'枚':''}</th>`;
+    bt+=`</tr></thead><tbody><tr>`;
+    for(let i=0;i<=6;i++)bt+=`<td class="${i===sel?'active-cell':''}">${arr[i]}%</td>`;
+    bt+=`</tr></tbody></table></div></div>`;
+  }
+  bt+=`<div class="bonus-total">${t('bonusTotal')}：SSR ${SSR_B[ssrS]}% + SR ${SR_B[srS]}% + R ${R_B[rS]}% = <b>+${bonusPct}%（${bonus.toFixed(2)}x）</b></div>`;
+  document.getElementById('pane-bonustable').innerHTML=bt;
+
+  startLiveTicker();
+}
+
+function showTab(name,el){
+  ['chart','entry','bonustable'].forEach(n=>{document.getElementById('pane-'+n).style.display=n===name?'':'none';});
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ── Init ──
+loadData();
+
+document.getElementById('targetPt').addEventListener('change',function(){
+  document.getElementById('customPtField').style.display=this.value==='custom'?'':'none';
+  render();saveData();
+});
+document.getElementById('startDate').addEventListener('change',()=>{render();saveData();});
+['stageDiff','ssrCount','srCount','rCount','specialBonus','diamondCount','shumai','bentoCount','customPt']
+  .forEach(id=>document.getElementById(id).addEventListener('input',()=>{render();saveData();}));
+
+if(!g('startDate')){document.getElementById('startDate').value=new Date().toISOString().slice(0,10);saveData();}
+
+applyLang();
+</script>
+</body>
+</html>
