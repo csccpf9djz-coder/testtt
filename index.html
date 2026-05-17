@@ -103,19 +103,15 @@ header .sub{font-size:12px;color:var(--text3);margin-top:0.3rem}
 
 <div id="saveIndicator">✓</div>
 
-<!-- 語言切換固定在最上方 -->
-<div style="background:var(--bg2);border-bottom:1px solid var(--border);padding:6px 1.25rem;display:flex;justify-content:flex-end;position:sticky;top:0;z-index:200;box-shadow:var(--shadow)">
-  <div class="lang-switcher">
-    <button class="lang-btn active" onclick="setLang('zh')">繁中</button>
-    <button class="lang-btn" onclick="setLang('zh-cn')">简中</button>
-    <button class="lang-btn" onclick="setLang('ja')">日本語</button>
-    <button class="lang-btn" onclick="setLang('ko')">한국어</button>
-    <button class="lang-btn" onclick="setLang('en')">English</button>
-  </div>
-</div>
-
 <div class="container">
   <header>
+    <div class="lang-switcher" style="margin-bottom:0.75rem">
+      <button class="lang-btn active" onclick="setLang('zh')">繁中</button>
+      <button class="lang-btn" onclick="setLang('zh-cn')">简中</button>
+      <button class="lang-btn" onclick="setLang('ja')">日本語</button>
+      <button class="lang-btn" onclick="setLang('ko')">한국어</button>
+      <button class="lang-btn" onclick="setLang('en')">English</button>
+    </div>
     <div class="header-inner">
       <span class="brand">18TRIP</span>
       <h1 id="h1-title">活動計算機</h1>
@@ -357,7 +353,7 @@ const T={
     ]
   },
   ja:{
-    title:'イベントpt計算機', sub:'イベント進捗・必要ダイヤの目安',
+    title:'イベントpt計算機', sub:'イベント進捗・必要ダイヤの目安。あくまで参考ですのでご了承ください。',
     settings:'基本設定', startDate:'イベント開始日（初日）',
     targetPt:'目標イベントpt', customPt:'カスタムpt目標', stageDiff:'イベントステージ難易度',
     cards:'特効枚数', maxed:'完凸',
@@ -413,7 +409,7 @@ const T={
     ]
   },
   ko:{
-    title:'이벤트 pt 계산기', sub:'이벤트 진행 소요 다이아 참고용',
+    title:'이벤트 pt 계산기', sub:'이벤트 진행 소요 다이아 참고용입니다. 어디까지나 참고 수치이므로 양해 부탁드립니다.',
     settings:'기본 설정', startDate:'이벤트 시작일（첫째날）',
     targetPt:'목표 이벤트 pt', customPt:'직접 입력 pt', stageDiff:'이벤트 스테이지 난이도',
     cards:'특효 매수', maxed:'풀브레이크',
@@ -441,7 +437,7 @@ const T={
     ]
   },
   en:{
-    title:'Event pt Calculator', sub:'Diamond estimate for event progress — reference only',
+    title:'Event pt Calculator', sub:'Diamond estimate for event progress. Please note this is for reference only.',
     settings:'Settings', startDate:'Event Start Date (Day 1)',
     targetPt:'Target Event pt', customPt:'Custom pt Goal', stageDiff:'Stage Difficulty',
     cards:'Bonus Cards', maxed:'Max Break',
@@ -754,27 +750,36 @@ function render(){
     const ep=parseFloat(entryData[i].pt);
     el2.push(entryData[i].pt===''?null:Math.round(ep));
   }
-  if(myChart)myChart.destroy();
-  myChart=new Chart(document.getElementById('progressChart'),{
-    type:'line',
-    data:{labels,datasets:[
-      {label:t('legendTarget'),data:tl,borderColor:'#d97706',backgroundColor:'rgba(217,119,6,0.06)',borderWidth:2,pointRadius:3,pointBackgroundColor:'#d97706',tension:.35,fill:true},
-      {label:t('legendActual'),data:el2,borderColor:'#2563eb',backgroundColor:'transparent',borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#2563eb',tension:.2,fill:false,spanGaps:false}
-    ]},
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      interaction:{mode:'index',intersect:false},
-      plugins:{
-        legend:{display:false},
-        tooltip:{backgroundColor:'#fff',borderColor:'#e5e5e3',borderWidth:1,titleColor:'#5a5a56',bodyColor:'#1a1a18',padding:10,
-          callbacks:{label:(c)=>`${c.dataset.label}: ${fmtPt(c.parsed.y)} pt`}}
-      },
-      scales:{
-        y:{ticks:{color:'#9a9a94',callback:(v)=>fmtPt(v),font:{size:10}},grid:{color:'rgba(0,0,0,0.05)'},border:{color:'transparent'}},
-        x:{ticks:{color:'#9a9a94',font:{size:10}},grid:{color:'rgba(0,0,0,0.03)'},border:{color:'#e5e5e3'}}
+  if(myChart){
+    // チャートが存在する場合はデータとラベルだけ更新（destroy しない → 画面ジャンプしない）
+    myChart.data.labels=labels;
+    myChart.data.datasets[0].data=tl;
+    myChart.data.datasets[0].label=t('legendTarget');
+    myChart.data.datasets[1].data=el2;
+    myChart.data.datasets[1].label=t('legendActual');
+    myChart.update('none');
+  } else {
+    myChart=new Chart(document.getElementById('progressChart'),{
+      type:'line',
+      data:{labels,datasets:[
+        {label:t('legendTarget'),data:tl,borderColor:'#d97706',backgroundColor:'rgba(217,119,6,0.06)',borderWidth:2,pointRadius:3,pointBackgroundColor:'#d97706',tension:.35,fill:true},
+        {label:t('legendActual'),data:el2,borderColor:'#2563eb',backgroundColor:'transparent',borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#2563eb',tension:.2,fill:false,spanGaps:false}
+      ]},
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        interaction:{mode:'index',intersect:false},
+        plugins:{
+          legend:{display:false},
+          tooltip:{backgroundColor:'#fff',borderColor:'#e5e5e3',borderWidth:1,titleColor:'#5a5a56',bodyColor:'#1a1a18',padding:10,
+            callbacks:{label:(c)=>`${c.dataset.label}: ${fmtPt(c.parsed.y)} pt`}}
+        },
+        scales:{
+          y:{ticks:{color:'#9a9a94',callback:(v)=>fmtPt(v),font:{size:10}},grid:{color:'rgba(0,0,0,0.05)'},border:{color:'transparent'}},
+          x:{ticks:{color:'#9a9a94',font:{size:10}},grid:{color:'rgba(0,0,0,0.03)'},border:{color:'#e5e5e3'}}
+        }
       }
-    }
-  });
+    });
+  }
   document.getElementById('chartLegend').innerHTML=`
     <div class="legend-item"><div class="legend-line" style="background:#d97706"></div><span>${t('legendTarget')}</span></div>
     <div class="legend-item"><div class="legend-line" style="background:#2563eb"></div><span>${t('legendActual')}</span></div>`;
