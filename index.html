@@ -107,7 +107,6 @@ header .sub{font-size:12px;color:var(--text3);margin-top:0.3rem}
   <header>
     <div class="lang-switcher" style="margin-bottom:0.75rem">
       <button class="lang-btn active" onclick="setLang('zh')">繁中</button>
-      <button class="lang-btn" onclick="setLang('zh-cn')">简中</button>
       <button class="lang-btn" onclick="setLang('ja')">日本語</button>
       <button class="lang-btn" onclick="setLang('ko')">한국어</button>
       <button class="lang-btn" onclick="setLang('en')">English</button>
@@ -380,34 +379,6 @@ const T={
       '完走称号 550万pt（班SP）','SSRカード完凸 1800万pt（Feature）','カスタム入力...'
     ]
   },
-  'zh-cn':{
-    title:'活动计算机', sub:'活动进度所需钻石，仅供参考',
-    settings:'基本设置', startDate:'活动开始日（第1天）',
-    targetPt:'目标活动pt', customPt:'自定义pt目标', stageDiff:'活动关卡难度',
-    cards:'特效张数', maxed:'满破',
-    special:'特殊加成（周年活动）%',
-    diamond:'持有钻石数量（个）', shumai:'烧卖（1个＝1AP）', bento:'烧卖便当（1个＝10AP）',
-    record:'活动记录', tabChart:'趋势图', tabEntry:'每日记录', tabBonus:'加成表',
-    entryHint:'每天记录累计pt，趋势图将同步更新。',
-    hdrDate:'日期', hdrPt:'累计pt（实绩）', hdrDiff:'与目标差距',
-    entryPlaceholder:'输入pt',
-    mEnd:'活动结束', mBonus:'特效加成', mRate:'倍率', mTotalAP:'自然AP合计',
-    mWithItem:'含道具', mPtPerAP:'每1AP获得pt', mLive:'剩余自然回体', mLiveSub:'JP时区，即时计算',
-    goal:'目标', current:'现在', complete:'完成', withEstimate:'含道具预估可达',
-    analysis:'进度分析', notSet:'未设置',
-    okNat:'✓ 自然恢复AP即可达标！还有余裕 {0} pt，无需消耗钻石。',
-    okItem:'✓ 自然AP＋道具可达标！使用烧卖便当约 {0} 个即可。',
-    okDia:'✓ 道具＋钻石可达标！预计消耗约 {0} 个钻石（持有 {1} 个）。',
-    warnDia:'⚠ 仍差 {0} pt，还需额外约 {1} 个钻石。',
-    legendTarget:'建议走势', legendActual:'实际进度',
-    bonusTotal:'合计加成', saved:'已自动保存 ✓',
-    targetOptions:[
-      'R卡满破 120万pt（班SP／季节）','R卡满破 131万pt（Feature）',
-      'SSR 1卡 300万pt（Feature）','SR满破 450万pt（季节）',
-      '完走称号 450万pt（季节）','SR满破 550万pt（班SP／Feature）',
-      '完走称号 550万pt（班SP）','SSR满破 1800万pt（Feature）','自定义输入...'
-    ]
-  },
   ko:{
     title:'이벤트 pt 계산기', sub:'이벤트 진행 소요 다이아 참고용입니다. 어디까지나 참고 수치이므로 양해 부탁드립니다.',
     settings:'기본 설정', startDate:'이벤트 시작일（첫째날）',
@@ -476,7 +447,7 @@ function t(key,...args){
 
 function applyLang(){
   const lang=LANG;
-  const htmlLang={zh:'zh-Hant','zh-cn':'zh-Hans',ja:'ja',ko:'ko',en:'en'}[lang]||'zh-Hant';
+  const htmlLang={zh:'zh-Hant',ja:'ja',ko:'ko',en:'en'}[lang]||'zh-Hant';
   document.documentElement.lang=htmlLang;
   document.body.className=`lang-${lang}`;
   document.title=`18TRIP ${t('title')}`;
@@ -513,7 +484,7 @@ function applyLang(){
   sel.value=cur;
 
   // Update lang buttons
-  const btnMap={zh:'繁中','zh-cn':'简中',ja:'日本語',ko:'한국어',en:'English'};
+  const btnMap={zh:'繁中',ja:'日本語',ko:'한국어',en:'English'};
   document.querySelectorAll('.lang-btn').forEach(b=>{
     b.classList.toggle('active',b.textContent.trim()===btnMap[lang]);
   });
