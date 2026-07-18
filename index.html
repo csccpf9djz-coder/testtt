@@ -52,9 +52,8 @@ header .sub{font-size:12px;color:var(--text3);margin-top:0.3rem}
 .field input,.field select{height:36px;padding:0 10px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-family:inherit;width:100%;transition:border-color 0.15s,box-shadow 0.15s;appearance:none;-webkit-appearance:none}
 .field input:focus,.field select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,119,6,0.12)}
 .field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239a9a94' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-color:var(--bg2);padding-right:28px;cursor:pointer}
-.metric-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:0.875rem}
-@media(max-width:640px){.metric-grid{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:380px){.metric-grid{grid-template-columns:repeat(2,1fr)}}
+.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:0.875rem}
+@media(max-width:640px){.metric-grid{grid-template-columns:repeat(2,1fr)}}
 .metric{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:0.875rem 0.75rem;text-align:center;box-shadow:var(--shadow)}
 .metric-label{font-size:9.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
 .metric-val{font-size:17px;font-weight:700;color:var(--text);line-height:1.1}
@@ -150,6 +149,7 @@ header .sub{font-size:12px;color:var(--text3);margin-top:0.3rem}
           <option value="10600">NORMAL（10,600pt）</option>
           <option value="10800">HARD（10,800pt）</option>
           <option value="10900">VERY HARD（10,900pt）</option>
+          <option value="11200">エキスパ（11,200pt）</option>
         </select>
       </div>
     </div>
@@ -229,9 +229,10 @@ header .sub{font-size:12px;color:var(--text3);margin-top:0.3rem}
     </div>
     <div id="pane-entry" style="display:none">
       <div class="hint" id="entry-hint" style="margin-bottom:10px">每天記錄累計pt，走勢圖將同步更新。</div>
-      <div class="entry-hdr">
+      <div class="entry-hdr" style="grid-template-columns:58px 1fr 1fr 1fr">
         <span id="hdr-date">日期</span>
-        <span id="hdr-pt">累計pt（實績）</span>
+        <span id="hdr-pt">累計pt</span>
+        <span id="hdr-tickets">未使用Trip切符</span>
         <span id="hdr-diff">與目標差距</span>
       </div>
       <div id="entryRows"></div>
@@ -318,7 +319,7 @@ const SSR_B=[0,20,40,60,80,110,150];
 const SR_B=[0,8,18,30,40,50,60];
 const R_B=[0,2,3,4,5,7,10];
 const STORAGE_KEY='aitore_calc_v3';
-let entryData=Array.from({length:EVENT_DAYS},()=>({pt:''}));
+let entryData=Array.from({length:EVENT_DAYS},()=>({pt:'',tickets:''}));
 
 // ── i18n ──
 let LANG='zh';
@@ -332,7 +333,7 @@ const T={
     diamond:'持有鑽石數量（個）', shumai:'燒賣（1個＝1AP）', bento:'燒賣便當（1個＝10AP）',
     record:'活動紀錄', tabChart:'走勢圖', tabEntry:'每日記錄', tabBonus:'加成表',
     entryHint:'每天記錄累計pt，走勢圖將同步更新。',
-    hdrDate:'日期', hdrPt:'累計pt（實績）', hdrDiff:'與目標差距',
+    hdrDate:'日期', hdrPt:'累計pt', hdrTickets:'未使用Trip切符', hdrDiff:'與目標差距',
     entryPlaceholder:'輸入pt',
     mEnd:'活動結束', mBonus:'特效加成', mRate:'倍率', mTotalAP:'自然AP合計',
     mWithItem:'含道具', mPtPerAP:'每1AP獲得pt', mLive:'剩餘自然回體', mLiveSub:'JP時區，即時計算',
@@ -356,11 +357,11 @@ const T={
     settings:'基本設定', startDate:'イベント開始日（初日）',
     targetPt:'目標イベントpt', customPt:'カスタムpt目標', stageDiff:'イベントステージ難易度',
     cards:'特効枚数', maxed:'完凸',
-    special:'特殊ボーナス（記念イベント等）%',
+    special:'特殊ボーナス（周年イベント等）%',
     diamond:'所持ダイヤ数（個）', shumai:'シュウマイ（1個＝1AP）', bento:'シュウマイ弁当（1個＝10AP）',
     record:'イベント記録', tabChart:'推移グラフ', tabEntry:'毎日記録', tabBonus:'特効表',
     entryHint:'毎日累計ptを記録すると推移グラフが更新されます。',
-    hdrDate:'日付', hdrPt:'累計pt（実績）', hdrDiff:'目標との差',
+    hdrDate:'日付', hdrPt:'累計pt', hdrTickets:'未使用Trip切符', hdrDiff:'目標との差',
     entryPlaceholder:'pt入力',
     mEnd:'イベント終了', mBonus:'特効ボーナス', mRate:'倍率', mTotalAP:'自然AP合計',
     mWithItem:'アイテム込み', mPtPerAP:'1AP当たりpt', mLive:'残り自然AP', mLiveSub:'JST基準リアルタイム計算',
@@ -388,7 +389,7 @@ const T={
     diamond:'보유 다이아（개）', shumai:'슈마이（1개＝1AP）', bento:'슈마이 도시락（1개＝10AP）',
     record:'이벤트 기록', tabChart:'추이 그래프', tabEntry:'매일 기록', tabBonus:'특효표',
     entryHint:'매일 누적 pt를 기록하면 그래프가 업데이트됩니다.',
-    hdrDate:'날짜', hdrPt:'누적 pt（실적）', hdrDiff:'목표와의 차이',
+    hdrDate:'날짜', hdrPt:'누적 pt', hdrTickets:'미사용 Trip티켓', hdrDiff:'목표와의 차이',
     entryPlaceholder:'pt 입력',
     mEnd:'이벤트 종료', mBonus:'특효 보너스', mRate:'배율', mTotalAP:'자연 AP 합계',
     mWithItem:'아이템 포함', mPtPerAP:'1AP당 pt', mLive:'남은 자연 AP', mLiveSub:'JP시간 기준 실시간',
@@ -416,7 +417,7 @@ const T={
     diamond:'Diamonds Owned', shumai:'Shumai (1 = 1 AP)', bento:'Shumai Bento (1 = 10 AP)',
     record:'Event Log', tabChart:'Trend Chart', tabEntry:'Daily Log', tabBonus:'Bonus Table',
     entryHint:'Log your cumulative pt each day to update the chart.',
-    hdrDate:'Date', hdrPt:'Cumulative pt', hdrDiff:'vs Target',
+    hdrDate:'Date', hdrPt:'Cumulative pt', hdrTickets:'Unused Trip Tickets', hdrDiff:'vs Target',
     entryPlaceholder:'Enter pt',
     mEnd:'Event Ends', mBonus:'Event Bonus', mRate:'multiplier', mTotalAP:'Total Natural AP',
     mWithItem:'w/ Items', mPtPerAP:'pt per AP', mLive:'Remaining AP', mLiveSub:'JST real-time',
@@ -474,6 +475,7 @@ function applyLang(){
   document.getElementById('entry-hint').textContent=t('entryHint');
   document.getElementById('hdr-date').textContent=t('hdrDate');
   document.getElementById('hdr-pt').textContent=t('hdrPt');
+  document.getElementById('hdr-tickets').textContent=t('hdrTickets');
   document.getElementById('hdr-diff').textContent=t('hdrDiff');
 
   // Update targetPt options
@@ -532,10 +534,27 @@ function _doSave(){
 function g(id){return document.getElementById(id).value;}
 function fmtPt(n){return Math.round(n).toLocaleString();}
 
+// 最新記録から累計pt＋未使用活動券分のptを合算して返す
 function getCurrentPt(){
   for(let i=EVENT_DAYS-1;i>=0;i--){
     const v=parseFloat(entryData[i].pt);
-    if(!isNaN(v)&&entryData[i].pt!=='')return v;
+    if(!isNaN(v)&&entryData[i].pt!==''){
+      // 未使用活動券があればその分のptも加算
+      const tickets=parseInt(entryData[i].tickets)||0;
+      const stagePt=parseInt(g('stageDiff'))||10500;
+      const{mult:bonus}=getBonus();
+      const ticketPt=Math.floor(tickets/TPBATTLE)*stagePt*bonus;
+      return v+ticketPt;
+    }
+  }
+  return 0;
+}
+
+// 走勢圖用：最新記録の累計pt（券加算前）を返す
+function getLatestRawPt(){
+  for(let i=EVENT_DAYS-1;i>=0;i--){
+    const v=parseFloat(entryData[i].pt);
+    if(!isNaN(v)&&entryData[i].pt!=='') return v;
   }
   return 0;
 }
@@ -576,8 +595,8 @@ function scheduleChartUpdate(){
     for(let i=0;i<EVENT_DAYS;i++){
       labels.push(getDayLabel(i));
       tl.push(Math.round(target/EVENT_DAYS*(i+1)));
-      const ep=parseFloat(entryData[i].pt);
-      el2.push(entryData[i].pt===''?null:Math.round(ep));
+      const ep=calcEffectivePtForDay(i);
+      el2.push(ep!==null?ep:null);
     }
     if(myChart){myChart.data.labels=labels;myChart.data.datasets[0].data=tl;myChart.data.datasets[1].data=el2;myChart.update('none');}
     // 進度分析も同時更新
@@ -643,24 +662,50 @@ function renderDiff(el,val,cumT){
   el.style.color=diff>=0?'#16a34a':'#dc2626';
 }
 
+function calcEffectivePtForDay(i){
+  const pt=parseFloat(entryData[i].pt);
+  if(isNaN(pt)||entryData[i].pt==='') return null;
+  const tickets=parseInt(entryData[i].tickets)||0;
+  const stagePt=parseInt(g('stageDiff'))||10500;
+  const{mult:bonus}=getBonus();
+  return Math.round(pt+Math.floor(tickets/TPBATTLE)*stagePt*bonus);
+}
+
 function buildEntryRows(){
-  const target=getTarget(),container=document.getElementById('entryRows');
+  const target=getTarget();
+  const container=document.getElementById('entryRows');
   container.innerHTML='';
   for(let i=0;i<EVENT_DAYS;i++){
     const cumT=target/EVENT_DAYS*(i+1);
-    const row=document.createElement('div');row.className='entry-row';
+    const row=document.createElement('div');
+    row.className='entry-row';
+    row.style.gridTemplateColumns='58px 1fr 1fr 1fr';
+
     const lbl=document.createElement('span');lbl.className='day-lbl';lbl.textContent=getDayLabel(i);
-    const inp=document.createElement('input');
-    inp.className='entry-input';inp.type='number';inp.placeholder=t('entryPlaceholder');
-    inp.setAttribute('inputmode','numeric');inp.value=entryData[i].pt;
+
+    const inpPt=document.createElement('input');
+    inpPt.className='entry-input';inpPt.type='number';inpPt.placeholder=t('entryPlaceholder');
+    inpPt.setAttribute('inputmode','numeric');inpPt.value=entryData[i].pt;
+
+    const inpTk=document.createElement('input');
+    inpTk.className='entry-input';inpTk.type='number';inpTk.placeholder='0';
+    inpTk.setAttribute('inputmode','numeric');inpTk.value=entryData[i].tickets;
+
     const diffDiv=document.createElement('div');diffDiv.className='diff-cell';
-    renderDiff(diffDiv,entryData[i].pt,cumT);
-    inp.addEventListener('input',function(){
-      entryData[i].pt=this.value;
-      renderDiff(diffDiv,this.value,cumT);
+    const effPt=calcEffectivePtForDay(i);
+    renderDiff(diffDiv, effPt!==null?String(effPt):'', cumT);
+
+    const update=()=>{
+      entryData[i].pt=inpPt.value;
+      entryData[i].tickets=inpTk.value;
+      const eff=calcEffectivePtForDay(i);
+      renderDiff(diffDiv, eff!==null?String(eff):'', cumT);
       scheduleChartUpdate();saveData();
-    });
-    row.appendChild(lbl);row.appendChild(inp);row.appendChild(diffDiv);
+    };
+    inpPt.addEventListener('input',update);
+    inpTk.addEventListener('input',update);
+
+    row.appendChild(lbl);row.appendChild(inpPt);row.appendChild(inpTk);row.appendChild(diffDiv);
     container.appendChild(row);
   }
 }
@@ -709,7 +754,6 @@ function render(){
     <div class="metric"><div class="metric-label">${t('mEnd')}</div><div class="metric-val">${endDateStr}</div></div>
     <div class="metric"><div class="metric-label">${t('mBonus')}</div><div class="metric-val" style="color:var(--accent)">+${bonusPct}%</div><div class="metric-sub">${bonus.toFixed(2)}x ${t('mRate')}</div></div>
     <div class="metric"><div class="metric-label">${t('mTotalAP')}</div><div class="metric-val">${fmtPt(totalAP)}</div></div>
-    <div class="metric"><div class="metric-label">${t('mPtPerAP')}</div><div class="metric-val">${fmtPt(ptPerAP)}</div></div>
     <div class="metric"><div class="metric-label">${t('mLive')}</div><div class="metric-val ${liveCls}" id="liveAP">${liveStr}</div></div>`;
 
   renderAnalysis();
@@ -718,8 +762,8 @@ function render(){
   for(let i=0;i<EVENT_DAYS;i++){
     labels.push(days[i].label);
     tl.push(Math.round(target/EVENT_DAYS*(i+1)));
-    const ep=parseFloat(entryData[i].pt);
-    el2.push(entryData[i].pt===''?null:Math.round(ep));
+    const ep2=calcEffectivePtForDay(i);
+    el2.push(ep2!==null?ep2:null);
   }
   if(myChart){
     // チャートが存在する場合はデータとラベルだけ更新（destroy しない → 画面ジャンプしない）
